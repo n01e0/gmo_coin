@@ -10,7 +10,6 @@ extern crate ureq;
 mod public;
 mod private;
 mod endpoint;
-mod util;
 
 use serde::{Serialize, Deserialize};
 
