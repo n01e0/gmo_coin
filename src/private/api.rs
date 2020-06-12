@@ -29,9 +29,9 @@ pub struct Margin {
 
 pub fn margin() -> Result<Margin> {
     let path = "/v1/account/margin";
-    let resp = get_without_params(path);
+    let resp = get_without_params(path).into_json().unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Asset
@@ -57,9 +57,9 @@ pub struct Assets {
 
 pub fn assets() -> Result<Assets> {
     let path = "/v1/account/assets";
-    let resp = get_without_params(path);
+    let resp = get_without_params(path).into_json().unwrap();
     
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Order
@@ -112,9 +112,9 @@ pub struct Orders {
 
 pub fn orders(order_id: usize) -> Result<Orders> {
     let path = "/v1/orders";
-    let resp = get_with_params(path, json!({"orderId":order_id}));
+    let resp = get_with_params(path, json!({"orderId":order_id})).into_json().unwrap();
     
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## ActiveOrder
@@ -173,8 +173,8 @@ pub fn active_orders(symbol: Symbol, page: Option<usize>, count: Option<usize>) 
         "count": count.unwrap_or(1)
     });
 
-    let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = get_with_params(path, query).into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Execution
@@ -240,8 +240,8 @@ pub fn executions(param: ExecutionsParam) -> Result<Executions> {
     let query = json!({
         "param":match param { ExecutionsParam::OrderId(n) => n, ExecutionsParam::ExecutionId(n) => n, }});
 
-    let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = get_with_params(path, query).into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## LatestExecution
@@ -293,8 +293,8 @@ pub fn latest_executions(symbol: Symbol, page: Option<usize>, count: Option<usiz
         "count":count.unwrap_or(1)
     });
 
-    let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = get_with_params(path, query).into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## OpenPosition
@@ -346,8 +346,8 @@ pub fn open_positions(symbol: Symbol, page: Option<usize>, count: Option<usize>)
         "count":format!("{}", count.unwrap_or(1))
     });
 
-    let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = get_with_params(path, query).into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## PositionSummary
@@ -384,8 +384,8 @@ pub fn position_summary(symbol: Symbol) -> Result<PositionSummarys> {
     let path = "/v1/positionSummary";
     let query = json!({"symbol":format!("{}", symbol)});
     
-    let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = get_with_params(path, query).into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Order

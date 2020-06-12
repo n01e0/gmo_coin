@@ -16,8 +16,8 @@ pub struct ExchangeStatus {
 
 pub fn status() -> Result<ExchangeStatus> {
     let path = "/v1/status";
-    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path)).call();
-    serde_json::from_str::<ExchangeStatus>(&resp.into_string().unwrap())
+    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path)).call().into_json().unwrap();
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## SymbolRate
@@ -49,9 +49,9 @@ pub fn ticker(symbol: Option<Symbol>) -> Result<LatestRate> {
     if let Some(symbol) = symbol {
         url = format!("{}?symbol={}", url, symbol);
     }
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().into_json().unwrap();
 
-    serde_json::from_str::<LatestRate>(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ### Ask
@@ -83,9 +83,9 @@ pub fn orderbooks(symbol: Symbol) -> Result<Snapshot> {
     
     let path = "/v1/orderbooks";
     let url = format!("{}{}?symbol={}", endpoint::PUBLIC_API, path, symbol);
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().into_json().unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Trade
@@ -143,7 +143,7 @@ pub fn trades(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Resu
     }
 
     let url = format!("{}{}{}", endpoint::PUBLIC_API, path, query);
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().into_json().unwrap();
 
-    serde_json::from_str::<TradesList>(&resp.into_string().unwrap())
+    serde_json::from_str(&resp["body"].to_string())
 }

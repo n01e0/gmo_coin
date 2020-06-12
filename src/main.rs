@@ -1,3 +1,6 @@
+use gmo_coin::*;
+
 fn main() {
-    println!("Hello, world!");
+    let status = public::api::status();
+    println!("{}", status.unwrap().status);
 }
