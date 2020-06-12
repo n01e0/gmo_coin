@@ -7,9 +7,9 @@ extern crate time;
 extern crate ring;
 extern crate ureq;
 
-mod public;
-mod private;
-mod endpoint;
+pub mod public;
+pub mod private;
+pub mod endpoint;
 
 use serde::{Serialize, Deserialize};
 
