@@ -1,4 +1,4 @@
-use crate::{endpoint, Symbol};
+use crate::{endpoint, Symbol, Pagenation};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 
@@ -38,10 +38,12 @@ pub struct SymbolRate {
 /// 各銘柄の最新レート
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LatestRate {
-    pub list: Vec<SymbolRate>
+    pub status: usize,
+    pub data: Vec<SymbolRate>,
+    pub responsetime: String
 }
 
-/// ### LatestRate::get
+/// ### ticker
 /// symbolの指定が無い場合、全銘柄のレートを取得する。
 pub fn ticker(symbol: Option<Symbol>) -> Result<LatestRate> {
     let path = "/v1/ticker";
@@ -49,9 +51,8 @@ pub fn ticker(symbol: Option<Symbol>) -> Result<LatestRate> {
     if let Some(symbol) = symbol {
         url = format!("{}?symbol={}", url, symbol);
     }
-    let resp = ureq::get(&url).call().into_json().unwrap();
-
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = ureq::get(&url).call();
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ### Ask
@@ -79,13 +80,20 @@ pub struct Snapshot {
     pub bids: Vec<Bid>
 }
 
-pub fn orderbooks(symbol: Symbol) -> Result<Snapshot> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SnapshotResp {
+    pub status: usize,
+    pub data: Snapshot,
+    pub responsetime: String
+}
+
+pub fn orderbooks(symbol: Symbol) -> Result<SnapshotResp> {
     
     let path = "/v1/orderbooks";
     let url = format!("{}{}?symbol={}", endpoint::PUBLIC_API, path, symbol);
-    let resp = ureq::get(&url).call().into_json().unwrap();
+    let resp = ureq::get(&url).call();
 
-    serde_json::from_str(&resp["data"].to_string())
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## Trade
@@ -110,19 +118,6 @@ pub struct Trade {
     pub timestamp:  String
 }
 
-/// ## Pagenation
-/// TradesListはページ形式で返ってくる
-///
-/// ### pagenation
-/// #### currentPage
-/// #### count
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Pagenation {
-    pub current_page:   String,
-    pub count:          String
-}
-
 /// ## TradesList
 /// 取引履歴のリスト
 #[derive(Debug, Serialize, Deserialize)]
@@ -131,7 +126,13 @@ pub struct TradesList {
     pub list: Vec<Trade>
 }
 
-pub fn trades(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Result<TradesList> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TradeListResp {
+    pub pagenation: Pagenation,
+    pub list: TradesList
+}
+
+pub fn trades(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Result<TradeListResp> {
     let path = "/v1/trades";
     let mut query = format!("?symbol={}", symbol);
     if let Some(page) = page {
@@ -145,5 +146,5 @@ pub fn trades(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Resu
     let url = format!("{}{}{}", endpoint::PUBLIC_API, path, query);
     let resp = ureq::get(&url).call().into_json().unwrap();
 
-    serde_json::from_str(&resp["body"].to_string())
+    serde_json::from_str(&resp["data"].to_string())
 }
