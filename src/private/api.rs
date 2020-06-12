@@ -1,14 +1,15 @@
-use crate::{endpoint, Symbol, LeverageSymbol, Pagenation};
+use crate::{endpoint, LeverageSymbol, Pagenation, Symbol};
 use serde::{Deserialize, Serialize};
-#[macro_use]
 use serde_json::{Value, Result, json};
-use std::{env, fmt};
-use std::time::{SystemTime, UNIX_EPOCH};
 use ring::hmac;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, fmt};
 
 lazy_static! {
-    static ref API_KEY: String = env::var("GMO_COIN_API_KEY").expect("You need set API key to GMO_COIN_API_KEY");
-    static ref SECRET_KEY: String = env::var("GMO_COIN_SECRET_KEY").expect("You need set API secret to GMO_COIN_SECRET_KEY");
+    static ref API_KEY: String =
+        env::var("GMO_COIN_API_KEY").expect("You need set API key to GMO_COIN_API_KEY");
+    static ref SECRET_KEY: String =
+        env::var("GMO_COIN_SECRET_KEY").expect("You need set API secret to GMO_COIN_SECRET_KEY");
 }
 
 /// ## Margin
@@ -24,7 +25,7 @@ pub struct Margin {
     pub actual_profit_loss: String,
     pub available_amount: String,
     pub margin: String,
-    pub profit_loss: String
+    pub profit_loss: String,
 }
 
 pub fn margin() -> Result<Margin> {
@@ -47,25 +48,25 @@ pub struct Asset {
     pub amount: String,
     pub available: String,
     pub conversion_rate: String,
-    pub symbol: String
+    pub symbol: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Assets {
-    pub list: Vec<Asset>
+    pub list: Vec<Asset>,
 }
 
 pub fn assets() -> Result<Assets> {
     let path = "/v1/account/assets";
     let resp = get_without_params(path).into_json().unwrap();
-    
+
     serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Order
 /// 注文情報
 ///
-///  - root_order_id:   親注文ID 
+///  - root_order_id:   親注文ID
 ///  - order_id:        注文ID
 ///  - symbol:          銘柄名
 ///  - side:            売買区分
@@ -82,25 +83,25 @@ pub fn assets() -> Result<Assets> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderInfo {
-    pub root_order_id:   usize,
-    pub order_id:        usize,
-    pub symbol:          String,
-    pub side:            String,
-    pub order_type:      String,
-    pub execution_type:  String,
-    pub settle_type:     String,
-    pub size:            String,
-    pub executed_size:   String,
-    pub price:           String,
-    pub losscut_price:   String,
-    pub status:          String,
-    pub time_in_force:   String,
-    pub timestamp:       String
+    pub root_order_id: usize,
+    pub order_id: usize,
+    pub symbol: String,
+    pub side: String,
+    pub order_type: String,
+    pub execution_type: String,
+    pub settle_type: String,
+    pub size: String,
+    pub executed_size: String,
+    pub price: String,
+    pub losscut_price: String,
+    pub status: String,
+    pub time_in_force: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Orders {
-    pub list: Vec<OrderInfo>
+    pub list: Vec<OrderInfo>,
 }
 
 /// ## orders
@@ -112,8 +113,10 @@ pub struct Orders {
 
 pub fn orders(order_id: usize) -> Result<Orders> {
     let path = "/v1/orders";
-    let resp = get_with_params(path, json!({"orderId":order_id})).into_json().unwrap();
-    
+    let resp = get_with_params(path, json!({ "orderId": order_id }))
+        .into_json()
+        .unwrap();
+
     serde_json::from_str(&resp["data"].to_string())
 }
 
@@ -137,37 +140,41 @@ pub fn orders(order_id: usize) -> Result<Orders> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveOrder {
-    pub root_order_id:   usize,
-    pub order_id:        usize,
-    pub symbol:          String,
-    pub side:            String,
-    pub order_type:      String,
-    pub execution_type:  String,
-    pub settle_type:     String,
-    pub size:            String,
-    pub executed_size:   String,
-    pub price:           String,
-    pub losscut_price:   String, 
-    pub status:          String,
-    pub time_in_force:   String,
-    pub timestamp:       String
+    pub root_order_id: usize,
+    pub order_id: usize,
+    pub symbol: String,
+    pub side: String,
+    pub order_type: String,
+    pub execution_type: String,
+    pub settle_type: String,
+    pub size: String,
+    pub executed_size: String,
+    pub price: String,
+    pub losscut_price: String,
+    pub status: String,
+    pub time_in_force: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ActiveOrders {
-    pub list: Vec<ActiveOrder>
+    pub list: Vec<ActiveOrder>,
 }
 
 /// ## active_orders
 /// 有効注文(ActiveOrders)の取得
-/// 
+///
 /// ### Parameters
 ///  - symbol:  シンボル
 ///  - page:    取得対象ページ(デフォルトでは1)
 ///  - count:   1ページあたりの取得件数(デフォルトは100(最大値))
-pub fn active_orders(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Result<ActiveOrders> {
+pub fn active_orders(
+    symbol: Symbol,
+    page: Option<usize>,
+    count: Option<usize>,
+) -> Result<ActiveOrders> {
     let path = "/v1/activeOrders";
-    let mut query = json!({
+    let query = json!({
         "symbol": format!("{}", symbol),
         "page": page.unwrap_or(1),
         "count": count.unwrap_or(1)
@@ -193,21 +200,21 @@ pub fn active_orders(symbol: Symbol, page: Option<usize>, count: Option<usize>) 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Execution {
-    pub execution_id:   usize,
-    pub order_id:       usize,
-    pub symbol:         String,
-    pub side:           String,
-    pub settle_type:    String,
-    pub size:           String,
-    pub price:          String,
-    pub loss_gain:      String,
-    pub fee:            String,
-    pub timestamp:      String
+    pub execution_id: usize,
+    pub order_id: usize,
+    pub symbol: String,
+    pub side: String,
+    pub settle_type: String,
+    pub size: String,
+    pub price: String,
+    pub loss_gain: String,
+    pub fee: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Executions {
-    pub list: Vec<Execution>
+    pub list: Vec<Execution>,
 }
 
 /// ## ExecutionsParam
@@ -217,14 +224,14 @@ pub struct Executions {
 ///  - execution_id:    約定ID
 pub enum ExecutionsParam {
     OrderId(usize),
-    ExecutionId(usize)
+    ExecutionId(usize),
 }
 
 impl fmt::Display for self::ExecutionsParam {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ExecutionsParam::OrderId(_) => write!(f, "orderId"),
-            ExecutionsParam::ExecutionId(_) => write!(f, "executionId")
+            ExecutionsParam::ExecutionId(_) => write!(f, "executionId"),
         }
     }
 }
@@ -260,22 +267,22 @@ pub fn executions(param: ExecutionsParam) -> Result<Executions> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatestExecution {
-    pub execution_id:    usize,
-    pub order_id:        usize,
-    pub symbol:          String,
-    pub side:            String,
-    pub settle_type:     String,
-    pub size:            String,
-    pub price:           String,
-    pub loss_gain:       String,
-    pub fee:             String,
-    pub timestamp:       String,
+    pub execution_id: usize,
+    pub order_id: usize,
+    pub symbol: String,
+    pub side: String,
+    pub settle_type: String,
+    pub size: String,
+    pub price: String,
+    pub loss_gain: String,
+    pub fee: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LatestExecutions {
     data: Pagenation,
-    list: Vec<LatestExecution>
+    list: Vec<LatestExecution>,
 }
 
 /// ## latest_executions
@@ -285,9 +292,13 @@ pub struct LatestExecutions {
 ///  - symbol:  銘柄
 ///  - page:    取得対象ページ(デフォルトでは1)
 ///  - count:   1ページあたりの取得件数
-pub fn latest_executions(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Result<LatestExecutions> {
+pub fn latest_executions(
+    symbol: Symbol,
+    page: Option<usize>,
+    count: Option<usize>,
+) -> Result<LatestExecutions> {
     let path = "/v1/latestExecutions";
-    let mut query = json!({
+    let query = json!({
         "symbol":format!("{}", symbol),
         "page":page.unwrap_or(1),
         "count":count.unwrap_or(1)
@@ -299,7 +310,7 @@ pub fn latest_executions(symbol: Symbol, page: Option<usize>, count: Option<usiz
 
 /// ## OpenPosition
 /// 有効建玉
-/// 
+///
 ///  - position_id:     建玉ID
 ///  - symbol:          銘柄名
 ///  - side:            売買区分
@@ -313,22 +324,22 @@ pub fn latest_executions(symbol: Symbol, page: Option<usize>, count: Option<usiz
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenPosition {
-    pub position_id:    usize,
-    pub symbol:         String,
-    pub side:           String,
-    pub size:           String,
-    pub order_size:     String,
-    pub price:          String,
-    pub loss_gain:      String,
-    pub leverage:       String,
-    pub losscut_price:  String,
-    pub timestamp:      String
+    pub position_id: usize,
+    pub symbol: String,
+    pub side: String,
+    pub size: String,
+    pub order_size: String,
+    pub price: String,
+    pub loss_gain: String,
+    pub leverage: String,
+    pub losscut_price: String,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpenPositions {
     data: Pagenation,
-    list: OpenPosition
+    list: OpenPosition,
 }
 
 /// ## open_positions
@@ -338,9 +349,13 @@ pub struct OpenPositions {
 ///  - symbol:  銘柄
 ///  - page:    取得対象ページ
 ///  - count:   取得件数
-pub fn open_positions(symbol: Symbol, page: Option<usize>, count: Option<usize>) -> Result<OpenPositions> {
+pub fn open_positions(
+    symbol: Symbol,
+    page: Option<usize>,
+    count: Option<usize>,
+) -> Result<OpenPositions> {
     let path = "/v1/openPositions";
-    let mut query = json!({
+    let query = json!({
         "symbol":format!("{}", symbol),
         "page":format!("{}", page.unwrap_or(1)),
         "count":format!("{}", count.unwrap_or(1))
@@ -362,17 +377,17 @@ pub fn open_positions(symbol: Symbol, page: Option<usize>, count: Option<usize>)
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PositionSummary {
-    pub average_position_rate:  String,
-    pub position_loss_gain:     String,
-    pub side:                   String,
-    pub sum_order_quantity:     String,
-    pub sum_position_quantity:  String,
-    pub symbol:                 String
+    pub average_position_rate: String,
+    pub position_loss_gain: String,
+    pub side: String,
+    pub sum_order_quantity: String,
+    pub sum_position_quantity: String,
+    pub symbol: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PositionSummarys {
-    pub list: Vec<PositionSummary>
+    pub list: Vec<PositionSummary>,
 }
 
 /// ## position_summary
@@ -382,31 +397,31 @@ pub struct PositionSummarys {
 ///  - symbol: 銘柄名
 pub fn position_summary(symbol: Symbol) -> Result<PositionSummarys> {
     let path = "/v1/positionSummary";
-    let query = json!({"symbol":format!("{}", symbol)});
-    
+    let query = json!({ "symbol": format!("{}", symbol) });
+
     let resp = get_with_params(path, query).into_json().unwrap();
     serde_json::from_str(&resp["data"].to_string())
 }
 
 /// ## Order
 /// 注文
-/// 
+///
 ///  - data: 注文対象のorderId
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Order {
-    data: String
+    data: String,
 }
 
 pub enum Side {
     BUY,
-    SELL
+    SELL,
 }
 
 impl fmt::Display for self::Side {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Side::BUY => write!(f, "BUY"),
-            Side::SELL => write!(f, "SELL")
+            Side::SELL => write!(f, "SELL"),
         }
     }
 }
@@ -414,7 +429,7 @@ impl fmt::Display for self::Side {
 pub enum ExecutionType {
     MARKET,
     LIMIT,
-    STOP
+    STOP,
 }
 
 impl fmt::Display for self::ExecutionType {
@@ -422,27 +437,33 @@ impl fmt::Display for self::ExecutionType {
         match self {
             ExecutionType::MARKET => write!(f, "MARKET"),
             ExecutionType::LIMIT => write!(f, "LIMIT"),
-            ExecutionType::STOP => write!(f, "STOP")
+            ExecutionType::STOP => write!(f, "STOP"),
         }
     }
 }
 
 /// ## order
 /// 新規注文
-/// 
+///
 /// ### params
 ///  - symbol:          銘柄名
 ///  - side:            BUY/SELL
 ///  - execution_type:  MARKET/LIMIT/STOP
 ///  - price:           LIMIT/STOP の場合は必要
 ///  - size:            量
-pub fn order(symbol: Symbol, side: Side, execution_type: ExecutionType, price: Option<String>, size: String) -> ureq::Response {
+pub fn order(
+    symbol: Symbol,
+    side: Side,
+    execution_type: ExecutionType,
+    price: Option<String>,
+    size: String,
+) -> ureq::Response {
     let path = "/v1/order";
     let query = json!({
             "symbol": format!("{}", symbol),
             "side":  format!("{}", side),
             "executionType": format!("{}", execution_type),
-            "price": format!("{}", price.unwrap_or("".to_string())),        
+            "price": format!("{}", price.unwrap_or("".to_string())),
             "size": format!("{}", size)
     });
 
@@ -456,9 +477,13 @@ pub fn order(symbol: Symbol, side: Side, execution_type: ExecutionType, price: O
 ///  - order_id:        注文ID
 ///  - price:           価格
 ///  - losscut_price:   ロスカットレート
-pub fn change_order(order_id: usize, price: String, losscut_price: Option<String>) -> ureq::Response {
+pub fn change_order(
+    order_id: usize,
+    price: String,
+    losscut_price: Option<String>,
+) -> ureq::Response {
     let path = "/v1/order";
-    let mut query = json!({
+    let query = json!({
         "orderId":order_id,
         "price":price,
         "losscutPrice":format!("{}", losscut_price.unwrap_or("".to_string()))
@@ -474,9 +499,7 @@ pub fn change_order(order_id: usize, price: String, losscut_price: Option<String
 ///  - order_id: 注文ID
 pub fn cancel_order(order_id: usize) -> ureq::Response {
     let path = "/v1/cancelOrder";
-    let query = json!(
-            {"orderId":order_id}
-        );
+    let query = json!({ "orderId": order_id });
 
     post_with_params(path, query)
 }
@@ -490,7 +513,7 @@ pub fn cancel_order(order_id: usize) -> ureq::Response {
 #[serde(rename_all = "camelCase")]
 pub struct SettlePosition {
     pub position_id: usize,
-    pub size: String
+    pub size: String,
 }
 
 /// ## close_order
@@ -503,7 +526,13 @@ pub struct SettlePosition {
 ///  - execution_type
 ///  - price
 ///  - settle_position: SettlePosition
-pub fn close_order(symbol: LeverageSymbol, side: Side, execution_type: ExecutionType, price: Option<String>, settle_position: SettlePosition) -> ureq::Response {
+pub fn close_order(
+    symbol: LeverageSymbol,
+    side: Side,
+    execution_type: ExecutionType,
+    price: Option<String>,
+    settle_position: SettlePosition,
+) -> ureq::Response {
     let path = "/v1/closeOrder";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -530,7 +559,13 @@ pub fn close_order(symbol: LeverageSymbol, side: Side, execution_type: Execution
 ///  - execution_type
 ///  - price
 ///  - size
-pub fn close_bulk_order(symbol: LeverageSymbol, side: Side, execution_type: ExecutionType, price: Option<String>, size: String) -> ureq::Response {
+pub fn close_bulk_order(
+    symbol: LeverageSymbol,
+    side: Side,
+    execution_type: ExecutionType,
+    price: Option<String>,
+    size: String,
+) -> ureq::Response {
     let path = "/v1/closeBulkOrder";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -561,7 +596,9 @@ pub fn change_losscut_price(position_id: usize, losscut_price: String) -> ureq::
 
 fn timestamp() -> u64 {
     let start = SystemTime::now();
-    let since_epoch = start.duration_since(UNIX_EPOCH).expect("Time went backwords");
+    let since_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwords");
 
     since_epoch.as_secs() * 1000 + since_epoch.subsec_nanos() as u64 / 1000000
 }
@@ -571,7 +608,7 @@ fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
     let text = format!("{}GET{}{}", timestamp, path, json);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
-    
+
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
     ureq::get(&url)
         .set("API-KEY", &API_KEY)
@@ -585,7 +622,7 @@ fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
     let text = format!("{}POST{}{}", timestamp, path, json);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
-    
+
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
     ureq::post(&url)
         .set("content-type", "application/json")
@@ -600,24 +637,11 @@ fn get_without_params(path: &'static str) -> ureq::Response {
     let text = format!("{}GET{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
-    
+
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
     ureq::get(&url)
         .set("API-KEY", &API_KEY)
         .set("API-TIMESTAMP", &format!("{}", timestamp))
         .set("API-SIGN", &sign)
         .call()
-}
-
-fn query_map(kv: Vec<(String, String)>) -> String {
-    let mut query = "?".to_string();
-    let len = kv.len();
-    for (idx, q) in kv.iter().enumerate() {
-        query = format!("{}{}={}", query, q.0, q.1);
-        if idx != len - 1 {
-            query = format!("{}&", query);
-        }
-    }
-
-    query
 }

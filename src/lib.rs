@@ -1,19 +1,19 @@
 extern crate hex;
 #[macro_use]
 extern crate lazy_static;
-extern crate serde_json;
-extern crate serde;
-extern crate time;
 extern crate ring;
+extern crate serde;
+extern crate serde_json;
+extern crate time;
 extern crate ureq;
 
-pub mod public;
-pub mod private;
 pub mod endpoint;
+pub mod private;
+pub mod public;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-/// ## Symbol 
+/// ## Symbol
 /// validなsymbol
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
@@ -27,17 +27,17 @@ pub enum Symbol {
     ETH_JPY,
     BCH_JPY,
     LTC_JPY,
-    XRP_JPY
+    XRP_JPY,
 }
 
 impl std::fmt::Display for self::Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Symbol::BTC     => write!(f, "BTC"),
-            Symbol::ETH     => write!(f, "ETH"),
-            Symbol::BCH     => write!(f, "BCH"),
-            Symbol::LTC     => write!(f, "LTC"),
-            Symbol::XRP     => write!(f, "XRP"),
+            Symbol::BTC => write!(f, "BTC"),
+            Symbol::ETH => write!(f, "ETH"),
+            Symbol::BCH => write!(f, "BCH"),
+            Symbol::LTC => write!(f, "LTC"),
+            Symbol::XRP => write!(f, "XRP"),
             Symbol::BTC_JPY => write!(f, "BTC_JPY"),
             Symbol::ETH_JPY => write!(f, "ETH_JPY"),
             Symbol::BCH_JPY => write!(f, "BCH_JPY"),
@@ -47,7 +47,7 @@ impl std::fmt::Display for self::Symbol {
     }
 }
 
-/// ## LevarageSymbol 
+/// ## LevarageSymbol
 /// levarageのvalidなsymbol
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
@@ -56,7 +56,7 @@ pub enum LeverageSymbol {
     ETH_JPY,
     BCH_JPY,
     LTC_JPY,
-    XRP_JPY
+    XRP_JPY,
 }
 
 impl std::fmt::Display for self::LeverageSymbol {
@@ -79,6 +79,6 @@ impl std::fmt::Display for self::LeverageSymbol {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagenation {
-    pub current_page:   String,
-    pub count:          String
+    pub current_page: String,
+    pub count: String,
 }
