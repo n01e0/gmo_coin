@@ -37,7 +37,7 @@ pub struct LatestRate {
 
 /// ### ticker
 /// symbolの指定が無い場合、全銘柄のレートを取得する。
-pub fn ticker(symbol: Option<Symbol>) -> Result<Response<LatestRate>> {
+pub fn ticker(symbol: Option<Symbol>) -> Result<Response<Vec<LatestRate>>> {
     let path = "/v1/ticker";
     let mut url = format!("{}{}", endpoint::PUBLIC_API, path);
     if let Some(symbol) = symbol {
@@ -70,6 +70,7 @@ pub struct Bid {
 pub struct Snapshot {
     pub asks: Vec<Ask>,
     pub bids: Vec<Bid>,
+    pub symbol: String
 }
 
 pub fn orderbooks(symbol: Symbol) -> Result<Response<Snapshot>> {

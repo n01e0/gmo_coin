@@ -78,8 +78,8 @@ impl std::fmt::Display for self::LeverageSymbol {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagenation {
-    pub current_page: String,
-    pub count: String,
+    pub current_page: usize,
+    pub count: usize,
 }
 
 /// ## Response
