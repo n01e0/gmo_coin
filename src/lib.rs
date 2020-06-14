@@ -73,12 +73,21 @@ impl std::fmt::Display for self::LeverageSymbol {
 /// ## Pagenation
 /// ページ形式で返ってくるレスポンス用の構造体
 ///
-/// ### pagenation
-/// #### currentPage
-/// #### count
+///  - currentPage
+///  - count
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagenation {
     pub current_page: String,
     pub count: String,
+}
+
+/// ## Response
+///
+/// Response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Response<T> {
+    pub status: usize,
+    pub data: T,
+    pub responsetime: String
 }

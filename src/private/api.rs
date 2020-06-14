@@ -1,4 +1,4 @@
-use crate::{endpoint, LeverageSymbol, Pagenation, Symbol};
+use crate::{endpoint, LeverageSymbol, Pagenation, Symbol, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Result, json};
 use ring::hmac;
@@ -28,11 +28,11 @@ pub struct Margin {
     pub profit_loss: String,
 }
 
-pub fn margin() -> Result<Margin> {
+pub fn margin() -> Result<Response<Margin>> {
     let path = "/v1/account/margin";
-    let resp = get_without_params(path).into_json().unwrap();
+    let resp = get_without_params(path);
 
-    serde_json::from_str(&resp["data"].to_string())
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## Asset
@@ -56,11 +56,11 @@ pub struct Assets {
     pub list: Vec<Asset>,
 }
 
-pub fn assets() -> Result<Assets> {
+pub fn assets() -> Result<Response<Assets>> {
     let path = "/v1/account/assets";
-    let resp = get_without_params(path).into_json().unwrap();
+    let resp = get_without_params(path);
 
-    serde_json::from_str(&resp["data"].to_string())
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## Order
@@ -111,13 +111,11 @@ pub struct Orders {
 ///
 ///  - order_id:        オーダーID
 
-pub fn orders(order_id: usize) -> Result<Orders> {
+pub fn orders(order_id: usize) -> Result<Response<Orders>> {
     let path = "/v1/orders";
-    let resp = get_with_params(path, json!({ "orderId": order_id }))
-        .into_json()
-        .unwrap();
+    let resp = get_with_params(path, json!({ "orderId": order_id }));
 
-    serde_json::from_str(&resp["data"].to_string())
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## ActiveOrder
@@ -172,7 +170,7 @@ pub fn active_orders(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<ActiveOrders> {
+) -> Result<Response<ActiveOrders>> {
     let path = "/v1/activeOrders";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -180,8 +178,8 @@ pub fn active_orders(
         "count": count.unwrap_or(1)
     });
 
-    let resp = get_with_params(path, query).into_json().unwrap();
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = get_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## Execution
@@ -242,13 +240,13 @@ impl fmt::Display for self::ExecutionsParam {
 /// ### Params
 /// ExecutionsParam
 
-pub fn executions(param: ExecutionsParam) -> Result<Executions> {
+pub fn executions(param: ExecutionsParam) -> Result<Response<Executions>> {
     let path = "/v1/executions";
     let query = json!({
         "param":match param { ExecutionsParam::OrderId(n) => n, ExecutionsParam::ExecutionId(n) => n, }});
 
-    let resp = get_with_params(path, query).into_json().unwrap();
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = get_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## LatestExecution
@@ -296,7 +294,7 @@ pub fn latest_executions(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<LatestExecutions> {
+) -> Result<Response<LatestExecutions>> {
     let path = "/v1/latestExecutions";
     let query = json!({
         "symbol":format!("{}", symbol),
@@ -304,8 +302,8 @@ pub fn latest_executions(
         "count":count.unwrap_or(1)
     });
 
-    let resp = get_with_params(path, query).into_json().unwrap();
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = get_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## OpenPosition
@@ -353,7 +351,7 @@ pub fn open_positions(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<OpenPositions> {
+) -> Result<Response<OpenPositions>> {
     let path = "/v1/openPositions";
     let query = json!({
         "symbol":format!("{}", symbol),
@@ -361,8 +359,8 @@ pub fn open_positions(
         "count":format!("{}", count.unwrap_or(1))
     });
 
-    let resp = get_with_params(path, query).into_json().unwrap();
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = get_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## PositionSummary
@@ -395,12 +393,12 @@ pub struct PositionSummarys {
 ///
 /// ### Params
 ///  - symbol: 銘柄名
-pub fn position_summary(symbol: Symbol) -> Result<PositionSummarys> {
+pub fn position_summary(symbol: Symbol) -> Result<Response<PositionSummarys>> {
     let path = "/v1/positionSummary";
     let query = json!({ "symbol": format!("{}", symbol) });
 
-    let resp = get_with_params(path, query).into_json().unwrap();
-    serde_json::from_str(&resp["data"].to_string())
+    let resp = get_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## Order
@@ -457,7 +455,7 @@ pub fn order(
     execution_type: ExecutionType,
     price: Option<String>,
     size: String,
-) -> ureq::Response {
+) -> Response<String> {
     let path = "/v1/order";
     let query = json!({
             "symbol": format!("{}", symbol),
@@ -467,7 +465,9 @@ pub fn order(
             "size": format!("{}", size)
     });
 
-    post_with_params(path, query)
+    let resp = post_with_params(path, query);
+
+    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## change_order
@@ -532,7 +532,7 @@ pub fn close_order(
     execution_type: ExecutionType,
     price: Option<String>,
     settle_position: SettlePosition,
-) -> ureq::Response {
+) -> Response<String> {
     let path = "/v1/closeOrder";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -547,7 +547,8 @@ pub fn close_order(
         ]
     });
 
-    post_with_params(path, query)
+    let resp = post_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## close_bulk_order
@@ -565,7 +566,7 @@ pub fn close_bulk_order(
     execution_type: ExecutionType,
     price: Option<String>,
     size: String,
-) -> ureq::Response {
+) -> Response<String> {
     let path = "/v1/closeBulkOrder";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -575,11 +576,12 @@ pub fn close_bulk_order(
         "size": format!("{}", size)
     });
 
-    post_with_params(path, query)
+    let resp = post_with_params(path, query);
+    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## change_losscut_price
-/// 建玉のロスカットレート
+/// 建玉のロスカットレート変更
 ///
 /// ### Params
 ///  - position_id
