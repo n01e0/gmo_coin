@@ -107,3 +107,18 @@ pub struct DataPage<T> {
     pub pagination: Pagenation,
     pub list: Vec<T>
 }
+
+/// ## ResponseList
+///
+/// Response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResponseList<T> {
+    pub status: usize,
+    pub data: List<T>,
+    pub responsetime: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct List<T> {
+    pub list: Vec<T>
+}

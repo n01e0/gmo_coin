@@ -1,4 +1,4 @@
-use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage};
+use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage, ResponseList};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Result, json};
 use ring::hmac;
@@ -94,19 +94,14 @@ pub struct OrderInfo {
     pub timestamp: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Orders {
-    pub list: Vec<OrderInfo>,
-}
-
 /// ## orders
-/// 注文情報(Orders)の取得
+/// 注文情報(OrderInfo)の取得
 ///
 /// ### Parameters
 ///
 ///  - order_id:        オーダーID
 
-pub fn orders(order_id: usize) -> Result<Response<Orders>> {
+pub fn orders(order_id: usize) -> Result<ResponseList<OrderInfo>> {
     let path = "/v1/orders";
     let resp = get_with_params(path, json!({ "orderId": order_id }));
 
@@ -200,11 +195,6 @@ pub struct Execution {
     pub timestamp: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Executions {
-    pub list: Vec<Execution>,
-}
-
 /// ## ExecutionsParam
 /// Execution取得のためのパラメタ
 ///
@@ -230,7 +220,7 @@ impl fmt::Display for self::ExecutionsParam {
 /// ### Params
 /// ExecutionsParam
 
-pub fn executions(param: ExecutionsParam) -> Result<Response<Executions>> {
+pub fn executions(param: ExecutionsParam) -> Result<ResponseList<Execution>> {
     let path = "/v1/executions";
     let query = json!({
         "param":match param { ExecutionsParam::OrderId(n) => n, ExecutionsParam::ExecutionId(n) => n, }});
@@ -361,17 +351,12 @@ pub struct PositionSummary {
     pub symbol: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PositionSummarys {
-    pub list: Vec<PositionSummary>,
-}
-
 /// ## position_summary
 /// 建玉サマリの取得
 ///
 /// ### Params
 ///  - symbol: 銘柄名
-pub fn position_summary(symbol: Symbol) -> Result<Response<PositionSummarys>> {
+pub fn position_summary(symbol: Symbol) -> Result<ResponseList<PositionSummary>> {
     let path = "/v1/positionSummary";
     let query = json!({ "symbol": format!("{}", symbol) });
 
