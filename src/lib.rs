@@ -91,3 +91,19 @@ pub struct Response<T> {
     pub data: T,
     pub responsetime: String
 }
+
+/// ## ResponsePage
+///
+/// Response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResponsePage<T> {
+    pub status: usize,
+    pub data: DataPage<T>,
+    pub responsetime: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DataPage<T> {
+    pub pagination: Pagenation,
+    pub list: Vec<T>
+}

@@ -1,4 +1,4 @@
-use crate::{endpoint, LeverageSymbol, Pagenation, Symbol, Response};
+use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Result, json};
 use ring::hmac;
@@ -44,19 +44,14 @@ pub fn margin() -> Result<Response<Margin>> {
 ///  - symbol:          銘柄名
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Asset {
+pub struct Assets {
     pub amount: String,
     pub available: String,
     pub conversion_rate: String,
     pub symbol: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Assets {
-    pub list: Vec<Asset>,
-}
-
-pub fn assets() -> Result<Response<Assets>> {
+pub fn assets() -> Result<Response<Vec<Assets>>> {
     let path = "/v1/account/assets";
     let resp = get_without_params(path);
 
@@ -137,7 +132,7 @@ pub fn orders(order_id: usize) -> Result<Response<Orders>> {
 ///  - timestamp:       注文日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ActiveOrder {
+pub struct ActiveOrders {
     pub root_order_id: usize,
     pub order_id: usize,
     pub symbol: String,
@@ -154,11 +149,6 @@ pub struct ActiveOrder {
     pub timestamp: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ActiveOrders {
-    pub list: Vec<ActiveOrder>,
-}
-
 /// ## active_orders
 /// 有効注文(ActiveOrders)の取得
 ///
@@ -170,7 +160,7 @@ pub fn active_orders(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<Response<ActiveOrders>> {
+) -> Result<ResponsePage<ActiveOrders>> {
     let path = "/v1/activeOrders";
     let query = json!({
         "symbol": format!("{}", symbol),
@@ -264,7 +254,7 @@ pub fn executions(param: ExecutionsParam) -> Result<Response<Executions>> {
 ///  - timestamp:       約定日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LatestExecution {
+pub struct LatestExecutions {
     pub execution_id: usize,
     pub order_id: usize,
     pub symbol: String,
@@ -275,12 +265,6 @@ pub struct LatestExecution {
     pub loss_gain: String,
     pub fee: String,
     pub timestamp: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LatestExecutions {
-    data: Pagenation,
-    list: Vec<LatestExecution>,
 }
 
 /// ## latest_executions
@@ -294,7 +278,7 @@ pub fn latest_executions(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<Response<LatestExecutions>> {
+) -> Result<ResponsePage<LatestExecutions>> {
     let path = "/v1/latestExecutions";
     let query = json!({
         "symbol":format!("{}", symbol),
@@ -321,7 +305,7 @@ pub fn latest_executions(
 ///  - timestamp:       約定日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct OpenPosition {
+pub struct OpenPositions {
     pub position_id: usize,
     pub symbol: String,
     pub side: String,
@@ -332,12 +316,6 @@ pub struct OpenPosition {
     pub leverage: String,
     pub losscut_price: String,
     pub timestamp: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct OpenPositions {
-    data: Pagenation,
-    list: OpenPosition,
 }
 
 /// ## open_positions
@@ -351,7 +329,7 @@ pub fn open_positions(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<Response<OpenPositions>> {
+) -> Result<ResponsePage<OpenPositions>> {
     let path = "/v1/openPositions";
     let query = json!({
         "symbol":format!("{}", symbol),
@@ -607,7 +585,7 @@ fn timestamp() -> u64 {
 
 fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
     let timestamp = timestamp();
-    let text = format!("{}GET{}{}", timestamp, path, json);
+    let text = format!("{}GET{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
@@ -621,7 +599,7 @@ fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
 
 fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
     let timestamp = timestamp();
-    let text = format!("{}POST{}{}", timestamp, path, json);
+    let text = format!("{}POST{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
