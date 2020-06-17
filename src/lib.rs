@@ -47,6 +47,37 @@ impl std::fmt::Display for self::Symbol {
     }
 }
 
+pub enum SymbolError {
+    SymbolParseError
+}
+
+impl std::fmt::Display for self::SymbolError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            SymbolError::SymbolParseError => write!(f, "Can't parse symbol"),
+        }
+    }
+}
+
+impl std::str::FromStr for self::Symbol {
+    type Err = self::SymbolError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BTC" => Ok(Symbol::BTC),
+            "ETH" => Ok(Symbol::ETH),
+            "BCH" => Ok(Symbol::BCH),
+            "LTC" => Ok(Symbol::LTC),
+            "XRP" => Ok(Symbol::XRP),
+            "BTC_JPY" => Ok(Symbol::BTC_JPY),
+            "ETH_JPY" => Ok(Symbol::ETH_JPY),
+            "BCH_JPY" => Ok(Symbol::BCH_JPY),
+            "LTC_JPY" => Ok(Symbol::LTC_JPY),
+            "XRP_JPY" => Ok(Symbol::XRP_JPY),
+            _ => Err(SymbolError::SymbolParseError),
+        }
+    }
+}
+
 /// ## LevarageSymbol
 /// levarageのvalidなsymbol
 #[derive(Debug)]
