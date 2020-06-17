@@ -373,6 +373,7 @@ pub struct Order {
     data: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Side {
     BUY,
     SELL,
@@ -387,6 +388,7 @@ impl fmt::Display for self::Side {
     }
 }
 
+#[derive(Debug)]
 pub enum ExecutionType {
     MARKET,
     LIMIT,

@@ -64,16 +64,16 @@ impl std::str::FromStr for self::Symbol {
     type Err = self::SymbolError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "BTC" => Ok(Symbol::BTC),
-            "ETH" => Ok(Symbol::ETH),
-            "BCH" => Ok(Symbol::BCH),
-            "LTC" => Ok(Symbol::LTC),
-            "XRP" => Ok(Symbol::XRP),
-            "BTC_JPY" => Ok(Symbol::BTC_JPY),
-            "ETH_JPY" => Ok(Symbol::ETH_JPY),
-            "BCH_JPY" => Ok(Symbol::BCH_JPY),
-            "LTC_JPY" => Ok(Symbol::LTC_JPY),
-            "XRP_JPY" => Ok(Symbol::XRP_JPY),
+            "BTC" | "btc" => Ok(Symbol::BTC),
+            "ETH" | "etc" => Ok(Symbol::ETH),
+            "BCH" | "bch" => Ok(Symbol::BCH),
+            "LTC" | "ltc" => Ok(Symbol::LTC),
+            "XRP" | "xrp" => Ok(Symbol::XRP),
+            "BTC_JPY" | "btc_jpy" => Ok(Symbol::BTC_JPY),
+            "ETH_JPY" | "eth_jpy" => Ok(Symbol::ETH_JPY),
+            "BCH_JPY" | "bch_jpy" => Ok(Symbol::BCH_JPY),
+            "LTC_JPY" | "ltc_jpy" => Ok(Symbol::LTC_JPY),
+            "XRP_JPY" | "xrp_jpy" => Ok(Symbol::XRP_JPY),
             _ => Err(SymbolError::SymbolParseError),
         }
     }
@@ -108,6 +108,21 @@ impl std::fmt::Display for self::LeverageSymbol {
         }
     }
 }
+
+impl std::str::FromStr for self::LeverageSymbol {
+    type Err = self::SymbolError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BTC_JPY" | "btc_jpy" => Ok(LeverageSymbol::BTC_JPY),
+            "ETH_JPY" | "eth_jpy" => Ok(LeverageSymbol::ETH_JPY),
+            "BCH_JPY" | "bch_jpy" => Ok(LeverageSymbol::BCH_JPY),
+            "LTC_JPY" | "ltc_jpy" => Ok(LeverageSymbol::LTC_JPY),
+            "XRP_JPY" | "xrp_jpy" => Ok(LeverageSymbol::XRP_JPY),
+            _ => Err(SymbolError::SymbolParseError),
+        }
+    }
+}
+
 /// ## Pagenation
 /// ページ形式で返ってくるレスポンス用の構造体
 ///
