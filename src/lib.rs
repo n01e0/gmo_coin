@@ -47,6 +47,7 @@ impl std::fmt::Display for self::Symbol {
     }
 }
 
+#[derive(Debug)]
 pub enum SymbolError {
     SymbolParseError
 }
@@ -75,6 +76,12 @@ impl std::str::FromStr for self::Symbol {
             "XRP_JPY" => Ok(Symbol::XRP_JPY),
             _ => Err(SymbolError::SymbolParseError),
         }
+    }
+}
+
+impl Symbol {
+    pub fn from_str(s: &str) -> Result<Symbol, SymbolError> {
+        s.parse::<Symbol>() 
     }
 }
 
