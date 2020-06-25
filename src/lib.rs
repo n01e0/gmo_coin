@@ -31,8 +31,8 @@ pub enum Symbol {
     XRP_JPY,
 }
 
-impl std::fmt::Display for self::Symbol {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for self::Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Symbol::BTC => write!(f, "BTC"),
             Symbol::ETH => write!(f, "ETH"),
@@ -53,8 +53,8 @@ pub enum SymbolError {
     SymbolParseError
 }
 
-impl std::fmt::Display for self::SymbolError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for self::SymbolError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             SymbolError::SymbolParseError => write!(f, "Can't parse symbol"),
         }
@@ -82,7 +82,7 @@ impl std::str::FromStr for self::Symbol {
 
 impl Symbol {
     pub fn from_str(s: &str) -> Result<Symbol, SymbolError> {
-        s.parse::<Symbol>() 
+        s.parse() 
     }
 }
 
@@ -98,8 +98,8 @@ pub enum LeverageSymbol {
     XRP_JPY,
 }
 
-impl std::fmt::Display for self::LeverageSymbol {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for self::LeverageSymbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             LeverageSymbol::BTC_JPY => write!(f, "BTC_JPY"),
             LeverageSymbol::ETH_JPY => write!(f, "ETH_JPY"),
@@ -121,6 +121,54 @@ impl std::str::FromStr for self::LeverageSymbol {
             "XRP_JPY" | "xrp_jpy" => Ok(LeverageSymbol::XRP_JPY),
             _ => Err(SymbolError::SymbolParseError),
         }
+    }
+}
+
+/// ## Side
+/// 売買
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_camel_case_types)]
+pub enum Side {
+    BUY,
+    SELL,
+}
+
+impl fmt::Display for self::Side {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Side::BUY => write!(f, "BUY"),
+            Side::SELL => write!(f, "SELL"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum SideError {
+    SideParseError
+}
+
+impl fmt::Display for self::SideError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SideError::SideParseError => write!(f, "SideParseError"),
+        }
+    }
+}
+
+impl std::str::FromStr for self::Side {
+    type Err = self::SideError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BUY" | "buy" => Ok(Side::BUY),
+            "SELL"|"sell" => Ok(Side::SELL),
+            _ => Err(SideError::SideParseError),
+        }
+    }
+}
+
+impl Side {
+    pub fn from_str(s: &str) -> Result<Side, SideError> {
+        s.parse()
     }
 }
 
@@ -177,41 +225,3 @@ pub struct List<T> {
     pub list: Vec<T>
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Side {
-    BUY,
-    SELL,
-}
-
-impl fmt::Display for self::Side {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Side::BUY => write!(f, "BUY"),
-            Side::SELL => write!(f, "SELL"),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum SideError {
-    SideParseError
-}
-
-impl fmt::Display for self::SideError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SideError::SideParseError => write!(f, "SideParseError"),
-        }
-    }
-}
-
-impl std::str::FromStr for self::Side {
-    type Err = self::SideError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "BUY" | "buy" => Ok(Side::BUY),
-            "SELL"|"sell" => Ok(Side::SELL),
-            _ => Err(SideError::SideParseError),
-        }
-    }
-}

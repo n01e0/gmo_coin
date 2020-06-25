@@ -15,6 +15,7 @@ fn main() {
     test_assets();
     test_active_orders();
     test_latest_executions();
+    test_from_str();
 }
 
 fn ok() {
@@ -126,6 +127,25 @@ fn test_active_orders() {
 fn test_latest_executions() {
     print!("[+] test private::api::latest_executions ... ");
     match private::api::latest_executions(Symbol::BTC, None, None) { 
+        Ok(_) => ok(),
+        Err(e) => {
+            failure();
+            eprintln!("{:?}", e);
+        }
+    }
+}
+
+fn test_from_str() {
+    print!("[+] test ::from_str ...");
+    match Symbol::from_str("BTC") {
+        Ok(_) => ok(),
+        Err(e) => {
+            failure();
+            eprintln!("{}", e);
+        },
+    }
+
+    match Side::from_str("buy") {
         Ok(_) => ok(),
         Err(e) => {
             failure();

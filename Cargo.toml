@@ -1,6 +1,6 @@
 [package]
 name = "gmo_coin"
-version = "0.1.80"
+version = "0.1.81"
 authors = ["n01e0 <noleo@vanillabeans.mobi>"]
 edition = "2018"
 description = "GMOコインのAPI叩くやつ"
