@@ -12,6 +12,7 @@ pub mod private;
 pub mod public;
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// ## Symbol
 /// validなsymbol
@@ -174,4 +175,43 @@ pub struct ResponseList<T> {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct List<T> {
     pub list: Vec<T>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Side {
+    BUY,
+    SELL,
+}
+
+impl fmt::Display for self::Side {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Side::BUY => write!(f, "BUY"),
+            Side::SELL => write!(f, "SELL"),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum SideError {
+    SideParseError
+}
+
+impl fmt::Display for self::SideError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SideError::SideParseError => write!(f, "SideParseError"),
+        }
+    }
+}
+
+impl std::str::FromStr for self::Side {
+    type Err = self::SideError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BUY" | "buy" => Ok(Side::BUY),
+            "SELL"|"sell" => Ok(Side::SELL),
+            _ => Err(SideError::SideParseError),
+        }
+    }
 }

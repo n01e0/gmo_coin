@@ -1,4 +1,4 @@
-use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage, ResponseList};
+use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage, ResponseList, Side};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, Result, json};
 use ring::hmac;
@@ -371,21 +371,6 @@ pub fn position_summary(symbol: Symbol) -> Result<ResponseList<PositionSummary>>
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Order {
     data: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Side {
-    BUY,
-    SELL,
-}
-
-impl fmt::Display for self::Side {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Side::BUY => write!(f, "BUY"),
-            Side::SELL => write!(f, "SELL"),
-        }
-    }
 }
 
 #[derive(Debug)]
