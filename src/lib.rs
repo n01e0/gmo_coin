@@ -124,6 +124,12 @@ impl std::str::FromStr for self::LeverageSymbol {
     }
 }
 
+impl LeverageSymbol {
+    pub fn from_str(s: &str) -> Result<Self, SymbolError> {
+        s.parse()
+    }
+}
+
 /// ## Side
 /// 売買
 #[derive(Debug, Serialize, Deserialize)]
