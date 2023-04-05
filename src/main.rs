@@ -1,4 +1,5 @@
 use gmo_coin::*;
+use std::str::FromStr;
 
 fn main() {
     let resp = private::api::active_orders(Symbol::BTC, Some(1), Some(1));
@@ -78,7 +79,7 @@ fn test_trades() {
     print!("[+] test public::api::trades ... ");
     match public::api::trades(Symbol::BTC, Some(1), Some(1)) {
         Ok(resp) => {
-            if resp.data.list.len() > 0 {
+            if !resp.data.list.is_empty() {
                 ok()
             } else {
                 failure()

@@ -80,12 +80,6 @@ impl std::str::FromStr for self::Symbol {
     }
 }
 
-impl Symbol {
-    pub fn from_str(s: &str) -> Result<Symbol, SymbolError> {
-        s.parse() 
-    }
-}
-
 /// ## LevarageSymbol
 /// levarageのvalidなsymbol
 #[derive(Debug)]
@@ -121,12 +115,6 @@ impl std::str::FromStr for self::LeverageSymbol {
             "XRP_JPY" | "xrp_jpy" => Ok(LeverageSymbol::XRP_JPY),
             _ => Err(SymbolError::SymbolParseError),
         }
-    }
-}
-
-impl LeverageSymbol {
-    pub fn from_str(s: &str) -> Result<Self, SymbolError> {
-        s.parse()
     }
 }
 
@@ -169,12 +157,6 @@ impl std::str::FromStr for self::Side {
             "SELL"|"sell" => Ok(Side::SELL),
             _ => Err(SideError::SideParseError),
         }
-    }
-}
-
-impl Side {
-    pub fn from_str(s: &str) -> Result<Side, SideError> {
-        s.parse()
     }
 }
 

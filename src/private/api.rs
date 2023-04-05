@@ -558,7 +558,7 @@ fn timestamp() -> u64 {
 fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
     let timestamp = timestamp();
     let text = format!("{}GET{}", timestamp, path);
-    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
+    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
@@ -572,7 +572,7 @@ fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
 fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
     let timestamp = timestamp();
     let text = format!("{}POST{}", timestamp, path);
-    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
+    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
@@ -587,7 +587,7 @@ fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
 fn get_without_params(path: &'static str) -> ureq::Response {
     let timestamp = timestamp();
     let text = format!("{}GET{}", timestamp, path);
-    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, (&SECRET_KEY).as_bytes());
+    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
