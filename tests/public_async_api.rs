@@ -1,3 +1,5 @@
+#![cfg(feature = "async")]
+
 use gmo_coin::public::api::KlineInterval;
 use gmo_coin::public::async_api;
 use gmo_coin::Symbol;

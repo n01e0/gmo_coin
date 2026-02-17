@@ -7,6 +7,10 @@ description = "GMOコインのAPI叩くやつ"
 license = "MIT"
 readme = "README.md"
 
+[features]
+default = []
+async = ["dep:reqwest"]
+
 [dependencies]
 hex = "0.4.2"
 serde = { version = "1.0.112", features = ["derive"]}
@@ -16,7 +20,7 @@ time = "0.2.16"
 ureq = { version = "1.1.2", features = ["json"]}
 ring = "0.16.14"
 lazy_static = "1.4.0"
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11", optional = true, default-features = false, features = ["json", "rustls-tls"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
