@@ -2,6 +2,12 @@ use crate::{endpoint, Pagenation, Response, Symbol};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 
+type UreqResponse = ureq::http::Response<ureq::Body>;
+
+fn response_body(mut response: UreqResponse) -> String {
+    response.body_mut().read_to_string().unwrap()
+}
+
 /// ## ExchangeStatus
 /// 取引所の稼動状態
 ///
@@ -16,8 +22,10 @@ pub struct ExchangeStatus {
 
 pub fn status() -> Result<Response<ExchangeStatus>> {
     let path = "/v1/status";
-    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path)).call();
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path))
+        .call()
+        .unwrap();
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## SymbolRate
@@ -42,8 +50,8 @@ pub fn ticker(symbol: Option<Symbol>) -> Result<Response<Vec<LatestRate>>> {
     if let Some(symbol) = symbol {
         url = format!("{}?symbol={}", url, symbol);
     }
-    let resp = ureq::get(&url).call();
-    serde_json::from_str(&resp.into_string().unwrap())
+    let resp = ureq::get(&url).call().unwrap();
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ### Ask
@@ -75,9 +83,9 @@ pub struct Snapshot {
 pub fn orderbooks(symbol: Symbol) -> Result<Response<Snapshot>> {
     let path = "/v1/orderbooks";
     let url = format!("{}{}?symbol={}", endpoint::PUBLIC_API, path, symbol);
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## Trade
@@ -126,9 +134,9 @@ pub fn trades(
     }
 
     let url = format!("{}{}{}", endpoint::PUBLIC_API, path, query);
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## KlineInterval
@@ -202,9 +210,9 @@ pub fn klines(
         interval,
         date
     );
-    let resp = ureq::get(&url).call();
+    let resp = ureq::get(&url).call().unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## SymbolRule
@@ -225,7 +233,9 @@ pub struct SymbolRule {
 /// 取引ルールを取得する
 pub fn symbols() -> Result<Response<Vec<SymbolRule>>> {
     let path = "/v1/symbols";
-    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path)).call();
+    let resp = ureq::get(&format!("{}{}", endpoint::PUBLIC_API, path))
+        .call()
+        .unwrap();
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }

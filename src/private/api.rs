@@ -4,12 +4,36 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Result, Value};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fmt};
+use ureq::http::{HeaderMap, header::HeaderValue};
 
 lazy_static! {
     static ref API_KEY: String =
         env::var("GMO_COIN_API_KEY").expect("You need set API key to GMO_COIN_API_KEY");
     static ref SECRET_KEY: String =
         env::var("GMO_COIN_SECRET_KEY").expect("You need set API secret to GMO_COIN_SECRET_KEY");
+}
+
+type UreqResponse = ureq::http::Response<ureq::Body>;
+
+fn response_body(mut response: UreqResponse) -> String {
+    response.body_mut().read_to_string().unwrap()
+}
+
+fn insert_header(headers: &mut HeaderMap<HeaderValue>, key: &'static str, value: &str) {
+    headers.insert(
+        key,
+        HeaderValue::from_str(value).expect("Header value should be valid ASCII"),
+    );
+}
+
+fn set_request_headers<B>(request: &mut ureq::RequestBuilder<B>, timestamp: u64, sign: &str) {
+    let timestamp_string = timestamp.to_string();
+    let headers = request
+        .headers_mut()
+        .expect("Request headers should be available");
+    insert_header(headers, "API-KEY", &API_KEY);
+    insert_header(headers, "API-TIMESTAMP", &timestamp_string);
+    insert_header(headers, "API-SIGN", sign);
 }
 
 /// ## Margin
@@ -27,7 +51,7 @@ pub fn margin() -> Result<Response<Margin>> {
     let path = "/v1/account/margin";
     let resp = get_without_params(path);
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## Asset
@@ -45,7 +69,7 @@ pub fn assets() -> Result<Response<Vec<Assets>>> {
     let path = "/v1/account/assets";
     let resp = get_without_params(path);
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## TradingVolume
@@ -54,7 +78,7 @@ pub fn trading_volume() -> Result<Response<Value>> {
     let path = "/v1/account/tradingVolume";
     let resp = get_without_params(path);
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## Order
@@ -87,7 +111,7 @@ pub fn orders<T: ToString>(order_id: T) -> Result<ResponseList<OrderInfo>> {
     let path = "/v1/orders";
     let resp = get_with_params(path, json!({ "orderId": order_id.to_string() }));
 
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## ActiveOrder
@@ -126,7 +150,7 @@ pub fn active_orders(
     });
 
     let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## Execution
@@ -182,7 +206,7 @@ pub fn executions(param: ExecutionsParam) -> Result<ResponseList<Execution>> {
     };
 
     let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## LatestExecution
@@ -217,7 +241,7 @@ pub fn latest_executions(
     });
 
     let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## OpenPosition
@@ -252,7 +276,7 @@ pub fn open_positions(
     });
 
     let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 /// ## PositionSummary
@@ -275,7 +299,7 @@ pub fn position_summary(symbol: Symbol) -> Result<ResponseList<PositionSummary>>
     let query = json!({ "symbol": format!("{}", symbol) });
 
     let resp = get_with_params(path, query);
-    serde_json::from_str(&resp.into_string().unwrap())
+    serde_json::from_str(&response_body(resp))
 }
 
 #[derive(Debug)]
@@ -318,7 +342,7 @@ pub fn order(
 
     let resp = post_with_params(path, payload);
 
-    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
+    serde_json::from_str(&response_body(resp)).unwrap()
 }
 
 /// ## change_order
@@ -327,7 +351,7 @@ pub fn change_order(
     order_id: usize,
     price: String,
     losscut_price: Option<String>,
-) -> ureq::Response {
+) -> UreqResponse {
     let path = "/v1/changeOrder";
     let mut payload = json!({
         "orderId":order_id,
@@ -343,7 +367,7 @@ pub fn change_order(
 
 /// ## cancel_order
 /// 注文キャンセル
-pub fn cancel_order(order_id: usize) -> ureq::Response {
+pub fn cancel_order(order_id: usize) -> UreqResponse {
     let path = "/v1/cancelOrder";
     let query = json!({ "orderId": order_id });
 
@@ -352,7 +376,7 @@ pub fn cancel_order(order_id: usize) -> ureq::Response {
 
 /// ## cancel_orders
 /// 複数注文のキャンセル
-pub fn cancel_orders(order_ids: Vec<usize>) -> ureq::Response {
+pub fn cancel_orders(order_ids: Vec<usize>) -> UreqResponse {
     let path = "/v1/cancelOrders";
     let query = json!({ "orderIds": order_ids });
 
@@ -361,7 +385,7 @@ pub fn cancel_orders(order_ids: Vec<usize>) -> ureq::Response {
 
 /// ## cancel_bulk_order
 /// 指定銘柄の一括キャンセル
-pub fn cancel_bulk_order(symbols: Vec<Symbol>) -> ureq::Response {
+pub fn cancel_bulk_order(symbols: Vec<Symbol>) -> UreqResponse {
     let path = "/v1/cancelBulkOrder";
     let symbols: Vec<String> = symbols.into_iter().map(|s| s.to_string()).collect();
     let query = json!({ "symbols": symbols });
@@ -405,7 +429,7 @@ pub fn close_order(
     }
 
     let resp = post_with_params(path, payload);
-    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
+    serde_json::from_str(&response_body(resp)).unwrap()
 }
 
 /// ## close_bulk_order
@@ -430,12 +454,12 @@ pub fn close_bulk_order(
     }
 
     let resp = post_with_params(path, payload);
-    serde_json::from_str(&resp.into_string().unwrap()).unwrap()
+    serde_json::from_str(&response_body(resp)).unwrap()
 }
 
 /// ## change_losscut_price
 /// 建玉のロスカットレート変更
-pub fn change_losscut_price(position_id: usize, losscut_price: String) -> ureq::Response {
+pub fn change_losscut_price(position_id: usize, losscut_price: String) -> UreqResponse {
     let path = "/v1/changeLosscutPrice";
     let query = json!({
         "positionId": position_id,
@@ -454,7 +478,7 @@ fn timestamp() -> u64 {
     since_epoch.as_secs() * 1000 + since_epoch.subsec_nanos() as u64 / 1000000
 }
 
-fn get_with_params(path: &'static str, query: Value) -> ureq::Response {
+fn get_with_params(path: &'static str, query: Value) -> UreqResponse {
     let timestamp = timestamp();
     let text = format!("{}GET{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
@@ -462,18 +486,16 @@ fn get_with_params(path: &'static str, query: Value) -> ureq::Response {
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
     let mut request = ureq::get(&url);
-    request.set("API-KEY", &API_KEY);
-    request.set("API-TIMESTAMP", &format!("{}", timestamp));
-    request.set("API-SIGN", &sign);
+    set_request_headers(&mut request, timestamp, &sign);
 
     for (key, value) in query_pairs(query) {
-        request.query(&key, &value);
+        request = request.query(&key, &value);
     }
 
-    request.call()
+    request.call().unwrap()
 }
 
-fn post_with_params(path: &'static str, payload: Value) -> ureq::Response {
+fn post_with_params(path: &'static str, payload: Value) -> UreqResponse {
     let timestamp = timestamp();
     let body = payload.to_string();
     let text = format!("{}POST{}{}", timestamp, path, body);
@@ -481,26 +503,21 @@ fn post_with_params(path: &'static str, payload: Value) -> ureq::Response {
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
-    ureq::post(&url)
-        .set("content-type", "application/json")
-        .set("API-KEY", &API_KEY)
-        .set("API-TIMESTAMP", &format!("{}", timestamp))
-        .set("API-SIGN", &sign)
-        .send_string(&body)
+    let mut request = ureq::post(&url).content_type("application/json");
+    set_request_headers(&mut request, timestamp, &sign);
+    request.send(&body).unwrap()
 }
 
-fn get_without_params(path: &'static str) -> ureq::Response {
+fn get_without_params(path: &'static str) -> UreqResponse {
     let timestamp = timestamp();
     let text = format!("{}GET{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
-    ureq::get(&url)
-        .set("API-KEY", &API_KEY)
-        .set("API-TIMESTAMP", &format!("{}", timestamp))
-        .set("API-SIGN", &sign)
-        .call()
+    let mut request = ureq::get(&url);
+    set_request_headers(&mut request, timestamp, &sign);
+    request.call().unwrap()
 }
 
 fn query_pairs(query: Value) -> Vec<(String, String)> {
