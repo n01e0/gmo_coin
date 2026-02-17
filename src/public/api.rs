@@ -171,13 +171,14 @@ impl std::fmt::Display for self::KlineInterval {
 /// ## Kline
 /// ローソク足
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Kline {
+    pub open_time: String,
     pub open: String,
     pub high: String,
     pub low: String,
     pub close: String,
     pub volume: String,
-    pub timestamp: String,
 }
 
 /// ## klines
