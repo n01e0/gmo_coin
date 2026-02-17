@@ -1,7 +1,7 @@
-use crate::{endpoint, LeverageSymbol, Symbol, Response, ResponsePage, ResponseList, Side};
-use serde::{Deserialize, Serialize};
-use serde_json::{Value, Result, json};
+use crate::{endpoint, LeverageSymbol, Response, ResponseList, ResponsePage, Side, Symbol};
 use ring::hmac;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Result, Value};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fmt};
 
@@ -14,11 +14,6 @@ lazy_static! {
 
 /// ## Margin
 /// 余力情報
-///
-///  - actualProfitLoss: 時価評価総額
-///  - availableAmount:  取引余力
-///  - Margin:           拘束証拠金
-///  - profitLoss:       評価損益
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Margin {
@@ -37,11 +32,6 @@ pub fn margin() -> Result<Response<Margin>> {
 
 /// ## Asset
 /// 資産残高
-///
-///  - amount:          残高
-///  - available:       利用可能金額(残高 - 出金予定額)
-///  - conversionRate:  円転レート
-///  - symbol:          銘柄名
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Assets {
@@ -58,23 +48,17 @@ pub fn assets() -> Result<Response<Vec<Assets>>> {
     serde_json::from_str(&resp.into_string().unwrap())
 }
 
+/// ## TradingVolume
+/// 取引高情報
+pub fn trading_volume() -> Result<Response<Value>> {
+    let path = "/v1/account/tradingVolume";
+    let resp = get_without_params(path);
+
+    serde_json::from_str(&resp.into_string().unwrap())
+}
+
 /// ## Order
 /// 注文情報
-///
-///  - root_order_id:   親注文ID
-///  - order_id:        注文ID
-///  - symbol:          銘柄名
-///  - side:            売買区分
-///  - order_type:      取引区分
-///  - execution_type:  注文タイプ
-///  - settle_type:     決済区分
-///  - size:            発注数量
-///  - executed_size:   約定数量
-///  - price:           注文価格
-///  - losscut_price:   ロスカットレート
-///  - status:          注文ステータス
-///  - time_in_force:   執行数量条件
-///  - timestamp:       注文日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderInfo {
@@ -98,33 +82,16 @@ pub struct OrderInfo {
 /// 注文情報(OrderInfo)の取得
 ///
 /// ### Parameters
-///
-///  - order_id:        オーダーID
-
-pub fn orders(order_id: usize) -> Result<ResponseList<OrderInfo>> {
+///  - order_id: 注文ID（カンマ区切りで複数指定可）
+pub fn orders<T: ToString>(order_id: T) -> Result<ResponseList<OrderInfo>> {
     let path = "/v1/orders";
-    let resp = get_with_params(path, json!({ "orderId": order_id }));
+    let resp = get_with_params(path, json!({ "orderId": order_id.to_string() }));
 
     serde_json::from_str(&resp.into_string().unwrap())
 }
 
 /// ## ActiveOrder
 /// 有効注文
-///
-///  - root_order_id:   親注文ID
-///  - order_id:        注文ID
-///  - symbol:          銘柄名
-///  - side:            売買区分
-///  - order_type:      取引区分
-///  - execution_type:  注文タイプ
-///  - settle_type:     決済区分
-///  - size:            発注数量
-///  - executed_size:   約定数量
-///  - price:           注文価格
-///  - losscut_price:   ロスカットレート
-///  - status:          注文ステータス
-///  - time_in_force:   執行数量条件
-///  - timestamp:       注文日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveOrders {
@@ -146,11 +113,6 @@ pub struct ActiveOrders {
 
 /// ## active_orders
 /// 有効注文(ActiveOrders)の取得
-///
-/// ### Parameters
-///  - symbol:  シンボル
-///  - page:    取得対象ページ(デフォルトでは1)
-///  - count:   1ページあたりの取得件数(デフォルトは100(最大値))
 pub fn active_orders(
     symbol: Symbol,
     page: Option<usize>,
@@ -160,7 +122,7 @@ pub fn active_orders(
     let query = json!({
         "symbol": format!("{}", symbol),
         "page": page.unwrap_or(1),
-        "count": count.unwrap_or(1)
+        "count": count.unwrap_or(100)
     });
 
     let resp = get_with_params(path, query);
@@ -169,17 +131,6 @@ pub fn active_orders(
 
 /// ## Execution
 /// 約定情報
-///
-///  - execution_id:    約定ID
-///  - order_id:        注文ID
-///  - symbol:          銘柄名
-///  - side:            売買区分
-///  - settle_type:     決済区分
-///  - size:            約定数量
-///  - price:           約定レート
-///  - loss_gain:       決済損益
-///  - fee:             取引手数料
-///  - timestamp:       約定日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Execution {
@@ -197,12 +148,19 @@ pub struct Execution {
 
 /// ## ExecutionsParam
 /// Execution取得のためのパラメタ
-///
-///  - order_id:        注文ID
-///  - execution_id:    約定ID
 pub enum ExecutionsParam {
-    OrderId(usize),
-    ExecutionId(usize),
+    OrderId(String),
+    ExecutionId(String),
+}
+
+impl ExecutionsParam {
+    pub fn order_id<T: ToString>(value: T) -> Self {
+        ExecutionsParam::OrderId(value.to_string())
+    }
+
+    pub fn execution_id<T: ToString>(value: T) -> Self {
+        ExecutionsParam::ExecutionId(value.to_string())
+    }
 }
 
 impl fmt::Display for self::ExecutionsParam {
@@ -216,14 +174,12 @@ impl fmt::Display for self::ExecutionsParam {
 
 /// ## executions
 /// 約定情報(Execution)の取得
-///
-/// ### Params
-/// ExecutionsParam
-
 pub fn executions(param: ExecutionsParam) -> Result<ResponseList<Execution>> {
     let path = "/v1/executions";
-    let query = json!({
-        "param":match param { ExecutionsParam::OrderId(n) => n, ExecutionsParam::ExecutionId(n) => n, }});
+    let query = match param {
+        ExecutionsParam::OrderId(value) => json!({ "orderId": value }),
+        ExecutionsParam::ExecutionId(value) => json!({ "executionId": value }),
+    };
 
     let resp = get_with_params(path, query);
     serde_json::from_str(&resp.into_string().unwrap())
@@ -231,17 +187,6 @@ pub fn executions(param: ExecutionsParam) -> Result<ResponseList<Execution>> {
 
 /// ## LatestExecution
 /// 最新約定一覧
-///
-///  - execution_id:    約定ID
-///  - order_id:        注文ID
-///  - symbol:          銘柄名
-///  - side:            売買区分
-///  - settle_type:     決済区分
-///  - size:            約定数量
-///  - price:           約定レート
-///  - loss_gain:       決済損益
-///  - fee:             取引手数料
-///  - timestamp:       約定日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatestExecutions {
@@ -259,11 +204,6 @@ pub struct LatestExecutions {
 
 /// ## latest_executions
 /// 最新約定一覧取得
-///
-/// ### Params
-///  - symbol:  銘柄
-///  - page:    取得対象ページ(デフォルトでは1)
-///  - count:   1ページあたりの取得件数
 pub fn latest_executions(
     symbol: Symbol,
     page: Option<usize>,
@@ -273,7 +213,7 @@ pub fn latest_executions(
     let query = json!({
         "symbol":format!("{}", symbol),
         "page":page.unwrap_or(1),
-        "count":count.unwrap_or(1)
+        "count":count.unwrap_or(100)
     });
 
     let resp = get_with_params(path, query);
@@ -282,17 +222,6 @@ pub fn latest_executions(
 
 /// ## OpenPosition
 /// 有効建玉
-///
-///  - position_id:     建玉ID
-///  - symbol:          銘柄名
-///  - side:            売買区分
-///  - size:            建玉数量
-///  - order_size:      発注数量
-///  - price:           建玉レート
-///  - loss_gain:       評価損益
-///  - leverage:        レバレッジ
-///  - losscut_price:   ロスカットレート
-///  - timestamp:       約定日時
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenPositions {
@@ -310,11 +239,6 @@ pub struct OpenPositions {
 
 /// ## open_positions
 /// 有効建玉の取得
-///
-/// ### Params
-///  - symbol:  銘柄
-///  - page:    取得対象ページ
-///  - count:   取得件数
 pub fn open_positions(
     symbol: Symbol,
     page: Option<usize>,
@@ -323,8 +247,8 @@ pub fn open_positions(
     let path = "/v1/openPositions";
     let query = json!({
         "symbol":format!("{}", symbol),
-        "page":format!("{}", page.unwrap_or(1)),
-        "count":format!("{}", count.unwrap_or(1))
+        "page":page.unwrap_or(1),
+        "count":count.unwrap_or(100)
     });
 
     let resp = get_with_params(path, query);
@@ -333,13 +257,6 @@ pub fn open_positions(
 
 /// ## PositionSummary
 /// 建玉サマリ
-///
-///  - average_position_rate:   平均建玉レート
-///  - position_loss_gain:      評価損益
-///  - side:                    売買区分
-///  - sum_order_quantity:      発注中数量
-///  - sum_position_quantity:   建玉数量
-///  - symbol:                  銘柄名
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PositionSummary {
@@ -353,24 +270,12 @@ pub struct PositionSummary {
 
 /// ## position_summary
 /// 建玉サマリの取得
-///
-/// ### Params
-///  - symbol: 銘柄名
 pub fn position_summary(symbol: Symbol) -> Result<ResponseList<PositionSummary>> {
     let path = "/v1/positionSummary";
     let query = json!({ "symbol": format!("{}", symbol) });
 
     let resp = get_with_params(path, query);
     serde_json::from_str(&resp.into_string().unwrap())
-}
-
-/// ## Order
-/// 注文
-///
-///  - data: 注文対象のorderId
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Order {
-    data: String,
 }
 
 #[derive(Debug)]
@@ -392,13 +297,6 @@ impl fmt::Display for self::ExecutionType {
 
 /// ## order
 /// 新規注文
-///
-/// ### params
-///  - symbol:          銘柄名
-///  - side:            BUY/SELL
-///  - execution_type:  MARKET/LIMIT/STOP
-///  - price:           LIMIT/STOP の場合は必要
-///  - size:            量
 pub fn order(
     symbol: Symbol,
     side: Side,
@@ -407,46 +305,44 @@ pub fn order(
     size: String,
 ) -> Response<String> {
     let path = "/v1/order";
-    let query = json!({
-            "symbol": format!("{}", symbol),
-            "side":  format!("{}", side),
-            "executionType": format!("{}", execution_type),
-            "price": format!("{}", price.unwrap_or("".to_string())),
-            "size": format!("{}", size)
+    let mut payload = json!({
+        "symbol": format!("{}", symbol),
+        "side":  format!("{}", side),
+        "executionType": format!("{}", execution_type),
+        "size": size
     });
 
-    let resp = post_with_params(path, query);
+    if let Some(price) = price {
+        payload["price"] = json!(price);
+    }
+
+    let resp = post_with_params(path, payload);
 
     serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## change_order
 /// 注文変更
-///
-/// ### Params
-///  - order_id:        注文ID
-///  - price:           価格
-///  - losscut_price:   ロスカットレート
 pub fn change_order(
     order_id: usize,
     price: String,
     losscut_price: Option<String>,
 ) -> ureq::Response {
-    let path = "/v1/order";
-    let query = json!({
+    let path = "/v1/changeOrder";
+    let mut payload = json!({
         "orderId":order_id,
         "price":price,
-        "losscutPrice":format!("{}", losscut_price.unwrap_or("".to_string()))
     });
 
-    post_with_params(path, query)
+    if let Some(losscut_price) = losscut_price {
+        payload["losscutPrice"] = json!(losscut_price);
+    }
+
+    post_with_params(path, payload)
 }
 
 /// ## cancel_order
 /// 注文キャンセル
-///
-/// ### Params
-///  - order_id: 注文ID
 pub fn cancel_order(order_id: usize) -> ureq::Response {
     let path = "/v1/cancelOrder";
     let query = json!({ "orderId": order_id });
@@ -454,11 +350,27 @@ pub fn cancel_order(order_id: usize) -> ureq::Response {
     post_with_params(path, query)
 }
 
+/// ## cancel_orders
+/// 複数注文のキャンセル
+pub fn cancel_orders(order_ids: Vec<usize>) -> ureq::Response {
+    let path = "/v1/cancelOrders";
+    let query = json!({ "orderIds": order_ids });
+
+    post_with_params(path, query)
+}
+
+/// ## cancel_bulk_order
+/// 指定銘柄の一括キャンセル
+pub fn cancel_bulk_order(symbols: Vec<Symbol>) -> ureq::Response {
+    let path = "/v1/cancelBulkOrder";
+    let symbols: Vec<String> = symbols.into_iter().map(|s| s.to_string()).collect();
+    let query = json!({ "symbols": symbols });
+
+    post_with_params(path, query)
+}
+
 /// ## SettlePosition
 /// レバレッジ取引で使う奴
-///
-///  - position_id
-///  - size
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettlePosition {
@@ -468,14 +380,6 @@ pub struct SettlePosition {
 
 /// ## close_order
 /// 決済注文
-/// 対象: レバレッジ取引
-///
-/// ### Params
-///  - symbol
-///  - side
-///  - execution_type
-///  - price
-///  - settle_position: SettlePosition
 pub fn close_order(
     symbol: LeverageSymbol,
     side: Side,
@@ -484,11 +388,10 @@ pub fn close_order(
     settle_position: SettlePosition,
 ) -> Response<String> {
     let path = "/v1/closeOrder";
-    let query = json!({
+    let mut payload = json!({
         "symbol": format!("{}", symbol),
         "side": format!("{}", side),
         "executionType": format!("{}", execution_type),
-        "price": format!("{}", price.unwrap_or("".to_string())),
         "settlePosition": [
             {
                 "positionId": settle_position.position_id,
@@ -497,19 +400,16 @@ pub fn close_order(
         ]
     });
 
-    let resp = post_with_params(path, query);
+    if let Some(price) = price {
+        payload["price"] = json!(price);
+    }
+
+    let resp = post_with_params(path, payload);
     serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## close_bulk_order
 /// 一括決済注文
-///
-/// ### Params
-///  - symbol
-///  - side
-///  - execution_type
-///  - price
-///  - size
 pub fn close_bulk_order(
     symbol: LeverageSymbol,
     side: Side,
@@ -518,24 +418,23 @@ pub fn close_bulk_order(
     size: String,
 ) -> Response<String> {
     let path = "/v1/closeBulkOrder";
-    let query = json!({
+    let mut payload = json!({
         "symbol": format!("{}", symbol),
         "side": format!("{}", side),
         "executionType": format!("{}", execution_type),
-        "price": format!("{}", price.unwrap_or("".to_string())),
-        "size": format!("{}", size)
+        "size": size
     });
 
-    let resp = post_with_params(path, query);
+    if let Some(price) = price {
+        payload["price"] = json!(price);
+    }
+
+    let resp = post_with_params(path, payload);
     serde_json::from_str(&resp.into_string().unwrap()).unwrap()
 }
 
 /// ## change_losscut_price
 /// 建玉のロスカットレート変更
-///
-/// ### Params
-///  - position_id
-///  - losscut_price
 pub fn change_losscut_price(position_id: usize, losscut_price: String) -> ureq::Response {
     let path = "/v1/changeLosscutPrice";
     let query = json!({
@@ -555,23 +454,29 @@ fn timestamp() -> u64 {
     since_epoch.as_secs() * 1000 + since_epoch.subsec_nanos() as u64 / 1000000
 }
 
-fn get_with_params(path: &'static str, json: Value) -> ureq::Response {
+fn get_with_params(path: &'static str, query: Value) -> ureq::Response {
     let timestamp = timestamp();
     let text = format!("{}GET{}", timestamp, path);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
     let url = format!("{}{}", endpoint::PRIVATE_API, path);
-    ureq::get(&url)
-        .set("API-KEY", &API_KEY)
-        .set("API-TIMESTAMP", &format!("{}", timestamp))
-        .set("API-SIGN", &sign)
-        .send_json(json)
+    let mut request = ureq::get(&url);
+    request.set("API-KEY", &API_KEY);
+    request.set("API-TIMESTAMP", &format!("{}", timestamp));
+    request.set("API-SIGN", &sign);
+
+    for (key, value) in query_pairs(query) {
+        request.query(&key, &value);
+    }
+
+    request.call()
 }
 
-fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
+fn post_with_params(path: &'static str, payload: Value) -> ureq::Response {
     let timestamp = timestamp();
-    let text = format!("{}POST{}", timestamp, path);
+    let body = payload.to_string();
+    let text = format!("{}POST{}{}", timestamp, path, body);
     let signed_key = hmac::Key::new(hmac::HMAC_SHA256, SECRET_KEY.as_bytes());
     let sign = hex::encode(hmac::sign(&signed_key, text.as_bytes()).as_ref());
 
@@ -581,7 +486,7 @@ fn post_with_params(path: &'static str, json: Value) -> ureq::Response {
         .set("API-KEY", &API_KEY)
         .set("API-TIMESTAMP", &format!("{}", timestamp))
         .set("API-SIGN", &sign)
-        .send_json(json)
+        .send_string(&body)
 }
 
 fn get_without_params(path: &'static str) -> ureq::Response {
@@ -596,4 +501,31 @@ fn get_without_params(path: &'static str) -> ureq::Response {
         .set("API-TIMESTAMP", &format!("{}", timestamp))
         .set("API-SIGN", &sign)
         .call()
+}
+
+fn query_pairs(query: Value) -> Vec<(String, String)> {
+    match query {
+        Value::Object(map) => map
+            .into_iter()
+            .filter_map(|(key, value)| value_to_query_string(value).map(|value| (key, value)))
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+fn value_to_query_string(value: Value) -> Option<String> {
+    match value {
+        Value::Null => None,
+        Value::Bool(value) => Some(value.to_string()),
+        Value::Number(value) => Some(value.to_string()),
+        Value::String(value) => Some(value),
+        Value::Array(values) => {
+            let values: Vec<String> = values
+                .into_iter()
+                .filter_map(value_to_query_string)
+                .collect();
+            Some(values.join(","))
+        }
+        Value::Object(_) => None,
+    }
 }
