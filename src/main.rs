@@ -1,7 +1,8 @@
+use anyhow::Result;
 use gmo_coin::*;
 use std::str::FromStr;
 
-fn main() {
+fn main() -> Result<()> {
     let resp = private::api::active_orders(Symbol::BTC, Some(1), Some(1));
     println!("{:#?}", resp);
 
@@ -17,6 +18,8 @@ fn main() {
     test_active_orders();
     test_latest_executions();
     test_from_str();
+
+    Ok(())
 }
 
 fn ok() {
@@ -30,11 +33,9 @@ fn failure() {
 fn test_exchange_status() {
     print!("[+] test public::api::status ... ");
     match public::api::status() {
-        Ok(resp) => {
-            match &*resp.data.status {
-                "MAINTENANCE" | "PREOPEN" | "OPEN" => ok(),
-                _ => failure(),
-            }
+        Ok(resp) => match &*resp.data.status {
+            "MAINTENANCE" | "PREOPEN" | "OPEN" => ok(),
+            _ => failure(),
         },
         Err(e) => {
             failure();
@@ -46,11 +47,9 @@ fn test_exchange_status() {
 fn test_ticker() {
     print!("[+] test public::api::ticker ... ");
     match public::api::ticker(Some(Symbol::BTC)) {
-        Ok(resp) => {
-            match &*resp.data[0].symbol {
-                "BTC" => ok(),
-                _ => failure()
-            }
+        Ok(resp) => match &*resp.data[0].symbol {
+            "BTC" => ok(),
+            _ => failure(),
         },
         Err(e) => {
             failure();
@@ -62,13 +61,11 @@ fn test_ticker() {
 fn test_orderbooks() {
     print!("[+] test public::api::orderbooks ... ");
     match public::api::orderbooks(Symbol::BTC) {
-        Ok(resp) => {
-            match &*resp.data.symbol {
-                "BTC" => ok(),
-                _ => failure()
-            }
+        Ok(resp) => match &*resp.data.symbol {
+            "BTC" => ok(),
+            _ => failure(),
         },
-        Err(e)=> {
+        Err(e) => {
             failure();
             eprintln!("{:?}", e);
         }
@@ -84,7 +81,7 @@ fn test_trades() {
             } else {
                 failure()
             }
-        },
+        }
         Err(e) => {
             failure();
             eprintln!("{:?}", e);
@@ -127,7 +124,7 @@ fn test_active_orders() {
 
 fn test_latest_executions() {
     print!("[+] test private::api::latest_executions ... ");
-    match private::api::latest_executions(Symbol::BTC, None, None) { 
+    match private::api::latest_executions(Symbol::BTC, None, None) {
         Ok(_) => ok(),
         Err(e) => {
             failure();
@@ -143,7 +140,7 @@ fn test_from_str() {
         Err(e) => {
             failure();
             eprintln!("{}", e);
-        },
+        }
     }
 
     match Side::from_str("buy") {

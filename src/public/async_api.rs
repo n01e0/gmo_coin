@@ -1,17 +1,16 @@
-use crate::{endpoint, Response, Symbol};
-use reqwest::Error as ReqwestError;
+use crate::{Response, Symbol, endpoint, error::Result};
 use serde::de::DeserializeOwned;
 
 use super::api::{
     ExchangeStatus, Kline, KlineInterval, LatestRate, Snapshot, SymbolRule, TradesList,
 };
 
-pub async fn status() -> Result<Response<ExchangeStatus>, ReqwestError> {
+pub async fn status() -> Result<Response<ExchangeStatus>> {
     let path = "/v1/status";
     get_json(format!("{}{}", endpoint::PUBLIC_API, path)).await
 }
 
-pub async fn ticker(symbol: Option<Symbol>) -> Result<Response<Vec<LatestRate>>, ReqwestError> {
+pub async fn ticker(symbol: Option<Symbol>) -> Result<Response<Vec<LatestRate>>> {
     let path = "/v1/ticker";
     let mut url = format!("{}{}", endpoint::PUBLIC_API, path);
     if let Some(symbol) = symbol {
@@ -21,7 +20,7 @@ pub async fn ticker(symbol: Option<Symbol>) -> Result<Response<Vec<LatestRate>>,
     get_json(url).await
 }
 
-pub async fn orderbooks(symbol: Symbol) -> Result<Response<Snapshot>, ReqwestError> {
+pub async fn orderbooks(symbol: Symbol) -> Result<Response<Snapshot>> {
     let path = "/v1/orderbooks";
     let url = format!("{}{}?symbol={}", endpoint::PUBLIC_API, path, symbol);
 
@@ -32,7 +31,7 @@ pub async fn trades(
     symbol: Symbol,
     page: Option<usize>,
     count: Option<usize>,
-) -> Result<Response<TradesList>, ReqwestError> {
+) -> Result<Response<TradesList>> {
     let path = "/v1/trades";
     let mut query = format!("?symbol={}", symbol);
     if let Some(page) = page {
@@ -52,7 +51,7 @@ pub async fn klines(
     symbol: Symbol,
     interval: KlineInterval,
     date: String,
-) -> Result<Response<Vec<Kline>>, ReqwestError> {
+) -> Result<Response<Vec<Kline>>> {
     let path = "/v1/klines";
     let url = format!(
         "{}{}?symbol={}&interval={}&date={}",
@@ -66,17 +65,17 @@ pub async fn klines(
     get_json(url).await
 }
 
-pub async fn symbols() -> Result<Response<Vec<SymbolRule>>, ReqwestError> {
+pub async fn symbols() -> Result<Response<Vec<SymbolRule>>> {
     let path = "/v1/symbols";
     get_json(format!("{}{}", endpoint::PUBLIC_API, path)).await
 }
 
-async fn get_json<T: DeserializeOwned>(url: String) -> Result<T, ReqwestError> {
-    reqwest::Client::new()
+async fn get_json<T: DeserializeOwned>(url: String) -> Result<T> {
+    Ok(reqwest::Client::new()
         .get(url)
         .send()
         .await?
         .error_for_status()?
         .json::<T>()
-        .await
+        .await?)
 }

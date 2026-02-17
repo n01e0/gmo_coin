@@ -1,15 +1,16 @@
 #![cfg(feature = "async")]
 
+use gmo_coin::Symbol;
+use gmo_coin::error::Result;
 use gmo_coin::public::api::KlineInterval;
 use gmo_coin::public::async_api;
-use gmo_coin::Symbol;
 use std::future::Future;
 use std::time::Duration;
 
 async fn call_with_retry<T, F, Fut>(name: &str, mut f: F) -> T
 where
     F: FnMut() -> Fut,
-    Fut: Future<Output = Result<T, reqwest::Error>>,
+    Fut: Future<Output = Result<T>>,
 {
     let mut last_err = None;
 

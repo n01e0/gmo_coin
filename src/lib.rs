@@ -1,6 +1,4 @@
 extern crate hex;
-#[macro_use]
-extern crate lazy_static;
 extern crate ring;
 extern crate serde;
 extern crate serde_json;
@@ -8,8 +6,11 @@ extern crate time;
 extern crate ureq;
 
 pub mod endpoint;
+pub mod error;
 pub mod private;
 pub mod public;
+
+pub use error::{GmoCoinError, Result as GmoCoinResult};
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

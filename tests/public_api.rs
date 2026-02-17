@@ -1,11 +1,12 @@
-use gmo_coin::public::api::{self, KlineInterval};
 use gmo_coin::Symbol;
+use gmo_coin::error::Result;
+use gmo_coin::public::api::{self, KlineInterval};
 use std::thread::sleep;
 use std::time::Duration;
 
 fn call_with_retry<T, F>(name: &str, mut f: F) -> T
 where
-    F: FnMut() -> serde_json::Result<T>,
+    F: FnMut() -> Result<T>,
 {
     let mut last_err = None;
 
